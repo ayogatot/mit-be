@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: dating_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=postgres://admin:password123@db:5432/dating_db
+      - JWT_SECRET=supersecretjwtkey
+    volumes:
+      - ./src:/usr/src/app/src
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /usr/src/app/src
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./Dockerfile
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
