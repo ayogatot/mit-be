@@ -12,12 +12,8 @@
         "header": [],
         "url": {
           "raw": "{{base_url}}/health",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "health"
-          ]
+          "host": ["{{base_url}}"],
+          "path": ["health"]
         }
       },
       "response": []
@@ -29,79 +25,135 @@
           "name": "Register User",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"testuser@datingapp.com\",\n  \"password\": \"password123\",\n  \"name\": \"Test User\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
             }
           },
           "response": []
         },
         {
           "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.ok && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('jwt_token', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"testuser@datingapp.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
             }
           },
           "response": []
         },
         {
           "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.ok && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('admin_jwt_token', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin@datingapp.com\",\n  \"password\": \"admin123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Me (Profile)",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"age\": 28,\n  \"job_title\": \"Software Engineer\",\n  \"zodiac\": \"Scorpio\",\n  \"about_me\": \"I love hiking and coffee.\",\n  \"looking_for\": \"Something serious\",\n  \"social_medias\": [{\"name\": \"Instagram\", \"value\": \"@myhandle\"}],\n  \"interests\": [\"<INTEREST_UUID_1>\", \"<INTEREST_UUID_2>\"],\n  \"languages\": [\"<LANGUAGE_UUID_1>\"],\n  \"relations\": [\"<RELATION_UUID_1>\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"age_min\": 22,\n  \"age_max\": 35,\n  \"gender_preference\": \"Female\",\n  \"looking_for\": \"Relationship\",\n  \"max_distance_km\": 25\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/me/preferences",
+              "host": ["{{base_url}}"],
+              "path": ["api", "me", "preferences"]
             }
           },
           "response": []
@@ -115,30 +167,14 @@
           "name": "Get Recommendation Profiles",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}"
-              }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
             "url": {
               "raw": "{{base_url}}/api/profiles?limit=10&offset=0",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "profiles"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "profiles"],
               "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
+                { "key": "limit", "value": "10" },
+                { "key": "offset", "value": "0" }
               ]
             }
           },
@@ -149,28 +185,17 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"target_id\": \"<UUID_OF_TARGET_USER>\",\n  \"is_liked\": true\n}"
+              "raw": "{\n  \"targetId\": \"<UUID_OF_TARGET_USER>\",\n  \"isLiked\": true\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/swipes",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "swipes"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "swipes"]
             }
           },
           "response": []
@@ -179,21 +204,11 @@
           "name": "Get All Locations",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}"
-              }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
             "url": {
               "raw": "{{base_url}}/api/locations",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "locations"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "locations"]
             }
           },
           "response": []
@@ -203,14 +218,8 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
@@ -218,13 +227,232 @@
             },
             "url": {
               "raw": "{{base_url}}/api/locations",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "locations"
+              "host": ["{{base_url}}"],
+              "path": ["api", "locations"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "Get My Matches",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/matches",
+              "host": ["{{base_url}}"],
+              "path": ["api", "matches"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Get Conversation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/messages/:matchId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ":matchId"],
+              "variable": [
+                { "key": "matchId", "value": "<UUID_OF_MATCHED_USER>" }
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hey! How are you?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/:matchId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ":matchId"],
+              "variable": [
+                { "key": "matchId", "value": "<UUID_OF_MATCHED_USER>" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meets",
+      "item": [
+        {
+          "name": "Explore Meets (Others)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/meets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Meets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/meets/mine",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets", "mine"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Meet",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Coffee at Seminyak\",\n  \"description\": \"Looking for someone to grab coffee with!\",\n  \"meet_date\": \"2026-05-20T10:00:00.000Z\",\n  \"location_id\": \"<LOCATION_UUID>\",\n  \"interest_ids\": [\"<INTEREST_UUID_1>\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/meets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Meet Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DONE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/meets/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets", ":id"],
+              "variable": [
+                { "key": "id", "value": "<MEET_UUID>" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Meet Requests (Owner)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/meets/:id/requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets", ":id", "requests"],
+              "variable": [
+                { "key": "id", "value": "<MEET_UUID>" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Meet Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hi! I'd love to join your meet.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/meets/:id/requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets", ":id", "requests"],
+              "variable": [
+                { "key": "id", "value": "<MEET_UUID>" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Accept / Reject Meet Request (Owner)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/meets/:id/requests/:requestId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meets", ":id", "requests", ":requestId"],
+              "variable": [
+                { "key": "id", "value": "<MEET_UUID>" },
+                { "key": "requestId", "value": "<REQUEST_UUID>" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Report User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reported_id\": \"<UUID_OF_REPORTED_USER>\",\n  \"reason\": \"Inappropriate content\",\n  \"description\": \"This user sent offensive messages.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports"]
             }
           },
           "response": []
@@ -238,27 +466,16 @@
           "name": "Admin Generic - GET All",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_jwt_token}}"
-              }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_jwt_token}}" }],
             "url": {
               "raw": "{{base_url}}/api/admin/:table",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                ":table"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", ":table"],
               "variable": [
                 {
                   "key": "table",
                   "value": "interests",
-                  "description": "Must be: interests, relations, languages"
+                  "description": "Must be: genders, interests, relations, languages"
                 }
               ]
             }
@@ -270,14 +487,8 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_jwt_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{admin_jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
@@ -285,19 +496,13 @@
             },
             "url": {
               "raw": "{{base_url}}/api/admin/:table",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                ":table"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", ":table"],
               "variable": [
                 {
                   "key": "table",
                   "value": "interests",
-                  "description": "Must be: interests, relations, languages"
+                  "description": "Must be: genders, interests, relations, languages"
                 }
               ]
             }
@@ -309,14 +514,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_jwt_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{admin_jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
@@ -324,24 +523,11 @@
             },
             "url": {
               "raw": "{{base_url}}/api/admin/:table/:id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                ":table",
-                ":id"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", ":table", ":id"],
               "variable": [
-                {
-                  "key": "table",
-                  "value": "interests"
-                },
-                {
-                  "key": "id",
-                  "value": "<UUID_OF_ENTRY>"
-                }
+                { "key": "table", "value": "interests" },
+                { "key": "id", "value": "<UUID_OF_ENTRY>" }
               ]
             }
           },
@@ -351,32 +537,14 @@
           "name": "Admin Generic - DELETE Remove",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_jwt_token}}"
-              }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_jwt_token}}" }],
             "url": {
               "raw": "{{base_url}}/api/admin/:table/:id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                ":table",
-                ":id"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", ":table", ":id"],
               "variable": [
-                {
-                  "key": "table",
-                  "value": "languages"
-                },
-                {
-                  "key": "id",
-                  "value": "<UUID_OF_ENTRY>"
-                }
+                { "key": "table", "value": "languages" },
+                { "key": "id", "value": "<UUID_OF_ENTRY>" }
               ]
             }
           },
@@ -392,12 +560,12 @@
     },
     {
       "key": "jwt_token",
-      "value": "eyJhbGciOi...",
+      "value": "",
       "type": "string"
     },
     {
       "key": "admin_jwt_token",
-      "value": "eyJhbGciOi...",
+      "value": "",
       "type": "string"
     }
   ]
