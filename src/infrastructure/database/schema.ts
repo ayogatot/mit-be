@@ -101,3 +101,59 @@ export const swipeHistory = pgTable("swipe_history", {
   is_swiped: boolean("is_swiped").default(true).notNull(),
   ...timestamps,
 });
+
+export const meets = pgTable("meets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  location_id: uuid("location_id").references(() => locations.id),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 50 }).default("OPEN").notNull(),
+  meet_date: timestamp("meet_date"),
+  ...timestamps,
+});
+
+export const meetInterests = pgTable("meet_interests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  meet_id: uuid("meet_id").references(() => meets.id).notNull(),
+  interest_id: uuid("interest_id").references(() => interests.id).notNull(),
+  ...timestamps,
+});
+
+export const meetRequests = pgTable("meet_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  meet_id: uuid("meet_id").references(() => meets.id).notNull(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  status: varchar("status", { length: 50 }).default("PENDING").notNull(),
+  message: text("message"),
+  ...timestamps,
+});
+
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sender_id: uuid("sender_id").references(() => users.id).notNull(),
+  receiver_id: uuid("receiver_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  is_read: boolean("is_read").default(false).notNull(),
+  ...timestamps,
+});
+
+export const reports = pgTable("reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reporter_id: uuid("reporter_id").references(() => users.id).notNull(),
+  reported_id: uuid("reported_id").references(() => users.id).notNull(),
+  reason: varchar("reason", { length: 255 }).notNull(),
+  description: text("description"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userPreferences = pgTable("user_preferences", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").references(() => users.id).notNull().unique(),
+  age_min: integer("age_min").default(18),
+  age_max: integer("age_max").default(45),
+  gender_preference: varchar("gender_preference", { length: 50 }),
+  looking_for: varchar("looking_for", { length: 255 }),
+  max_distance_km: integer("max_distance_km").default(50),
+  ...timestamps,
+});
