@@ -1,4 +1,4 @@
-import { UserRepository } from "../../domain/repositories/UserRepository";
+import { UserRepository, User } from "../../domain/repositories/UserRepository";
 import { sign } from "jsonwebtoken";
 
 export interface LoginInput {
@@ -9,7 +9,7 @@ export interface LoginInput {
 export class LoginUserUseCase {
   constructor(private userRepository: UserRepository) {}
 
-  async execute(input: LoginInput): Promise<{ token: string }> {
+  async execute(input: LoginInput): Promise<{ user: Omit<User, "password">; token: string }> {
     const user = await this.userRepository.findByEmail(input.email);
     if (!user) {
       throw new Error("Invalid email or password");
@@ -26,6 +26,8 @@ export class LoginUserUseCase {
       { expiresIn: "24h" }
     );
 
-    return { token };
+    const { password, ...safeUser } = user;
+
+    return { user: safeUser, token };
   }
 }

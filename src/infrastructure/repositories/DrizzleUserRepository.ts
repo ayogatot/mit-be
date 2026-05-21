@@ -1,5 +1,5 @@
 import { db } from "../database/db";
-import { users, swipeHistory, roles, userInterests, userRelations } from "../database/schema";
+import { users, swipeHistory, roles, userInterests, userRelations, userLanguages, photos } from "../database/schema";
 import { UserRepository, User } from "../../domain/repositories/UserRepository";
 import { eq, notInArray, sql, desc } from "drizzle-orm";
 
@@ -9,7 +9,16 @@ export class DrizzleUserRepository implements UserRepository {
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
-    
+
+    return (user as User) || null;
+  }
+
+  async findById(id: string): Promise<User | null> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
     return (user as User) || null;
   }
 
@@ -21,12 +30,33 @@ export class DrizzleUserRepository implements UserRepository {
         email: userData.email!,
         password: userData.password!,
         name: userData.name!,
-        role_id: userRole?.id, // Assumes seed is run
+        role_id: userRole?.id,
       })
       .returning();
-      
-    // Remove password from returned object for safety
+
     const { password, ...safeUser } = user;
+    return safeUser as User;
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User> {
+    const updateData: any = { updated_at: new Date() };
+    const allowedFields = [
+      'name', 'age', 'job_title', 'zodiac', 'about_me', 'looking_for',
+      'social_medias', 'profile_picture_url', 'gender_id', 'location_id',
+      'is_verified', 'is_blocked', 'is_premium',
+    ];
+    for (const field of allowedFields) {
+      if ((data as any)[field] !== undefined) {
+        updateData[field] = (data as any)[field];
+      }
+    }
+
+    const [updated] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+
+    const { password, ...safeUser } = updated;
     return safeUser as User;
   }
 
@@ -44,11 +74,11 @@ export class DrizzleUserRepository implements UserRepository {
     const swipedTargets = await db.select({ target_id: swipeHistory.target_id })
       .from(swipeHistory)
       .where(eq(swipeHistory.user_id, userId));
-      
-    const swipedIds = swipedTargets.map(t => t.target_id);
-    swipedIds.push(userId); // Add self to exclude
 
-    // 3. Construct raw SQL match scoring logic
+    const swipedIds = swipedTargets.map(t => t.target_id);
+    swipedIds.push(userId); // exclude self
+
+    // 3. Construct SQL match scoring logic
     let sharedInterestsQuery = sql`0`;
     if (interestIds.length > 0) {
       const interestSqlList = sql.join(interestIds.map(id => sql`${id}`), sql`, `);
@@ -69,17 +99,22 @@ export class DrizzleUserRepository implements UserRepository {
         email: users.email,
         name: users.name,
         gender_id: users.gender_id,
+        location_id: users.location_id,
+        role_id: users.role_id,
         age: users.age,
         profile_picture_url: users.profile_picture_url,
         job_title: users.job_title,
         zodiac: users.zodiac,
         about_me: users.about_me,
         looking_for: users.looking_for,
+        social_medias: users.social_medias,
         is_verified: users.is_verified,
         is_premium: users.is_premium,
         match_score: matchScore,
-        interests: sql`COALESCE((SELECT jsonb_agg(jsonb_build_object('id', i.id, 'name', i.name)) FROM "user_interests" ui JOIN "interests" i ON ui.interest_id = i.id WHERE ui.user_id = users.id), '[]'::jsonb)`,
-        relations: sql`COALESCE((SELECT jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name)) FROM "user_relations" ur JOIN "relations" r ON ur.relation_id = r.id WHERE ur.user_id = users.id), '[]'::jsonb)`
+        interests: sql<{ id: string; name: string }[]>`COALESCE((SELECT jsonb_agg(jsonb_build_object('id', i.id, 'name', i.name)) FROM "user_interests" ui JOIN "interests" i ON ui.interest_id = i.id WHERE ui.user_id = users.id), '[]'::jsonb)`,
+        relations: sql<{ id: string; name: string }[]>`COALESCE((SELECT jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name)) FROM "user_relations" ur JOIN "relations" r ON ur.relation_id = r.id WHERE ur.user_id = users.id), '[]'::jsonb)`,
+        languages: sql<{ id: string; name: string }[]>`COALESCE((SELECT jsonb_agg(jsonb_build_object('id', l.id, 'name', l.name)) FROM "user_languages" ul JOIN "languages" l ON ul.language_id = l.id WHERE ul.user_id = users.id), '[]'::jsonb)`,
+        photos: sql<string[]>`COALESCE((SELECT jsonb_agg(p.url) FROM "photos" p WHERE p.user_id = users.id), '[]'::jsonb)`,
       })
       .from(users)
       .where(notInArray(users.id, swipedIds))
@@ -87,7 +122,6 @@ export class DrizzleUserRepository implements UserRepository {
       .limit(limit)
       .offset(offset);
 
-    // Filter out match_score to align strictly with the expected User object array
     return unswiped.map(({ match_score, ...u }) => u) as User[];
   }
 }

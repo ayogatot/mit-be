@@ -21,8 +21,8 @@ export class SwipeController {
       }
 
       const body = await c.req.json();
-      const targetId = body.targetId;
-      const isLiked = body.isLiked;
+      const targetId = body.targetId ?? body.target_id;
+      const isLiked = body.isLiked !== undefined ? body.isLiked : body.is_liked;
 
       if (!targetId || typeof isLiked !== 'boolean') {
         return errorResponse(c, "Invalid payload", 400);
