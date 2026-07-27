@@ -3,6 +3,7 @@ import { db } from "../../infrastructure/database/db";
 import { users, roles } from "../../infrastructure/database/schema";
 import { eq } from "drizzle-orm";
 import { errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 export const adminMiddleware = async (c: Context, next: Next) => {
   const payload = c.get("jwtPayload") as { id: string; email: string } | undefined;
@@ -25,7 +26,7 @@ export const adminMiddleware = async (c: Context, next: Next) => {
 
     await next();
   } catch (error) {
-    console.error("Admin middleware error:", error);
+    logger.error("Admin middleware error", error);
     return errorResponse(c, "Internal Server Error", 500);
   }
 };

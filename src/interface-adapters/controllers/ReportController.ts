@@ -3,6 +3,7 @@ import { db } from "../../infrastructure/database/db";
 import { reports, users } from "../../infrastructure/database/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 export class ReportController {
   async createReport(c: Context) {
@@ -39,7 +40,7 @@ export class ReportController {
 
       return successResponse(c, newReport, "Report submitted successfully", 201);
     } catch (error: any) {
-      console.error(error);
+      logger.error("createReport error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

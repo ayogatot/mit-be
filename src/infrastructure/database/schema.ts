@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp, jsonb, integer, numeric, AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, boolean, timestamp, jsonb, integer, numeric, AnyPgColumn, index } from "drizzle-orm/pg-core";
 
 const timestamps = {
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -52,7 +52,9 @@ export const photos = pgTable("photos", {
   user_id: uuid("user_id").references(() => users.id).notNull(),
   url: text("url").notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("photos_user_id_idx").on(table.user_id),
+]);
 
 export const interests = pgTable("interests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -65,7 +67,9 @@ export const userInterests = pgTable("user_interests", {
   user_id: uuid("user_id").references(() => users.id).notNull(),
   interest_id: uuid("interest_id").references(() => interests.id).notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("user_interests_user_id_idx").on(table.user_id),
+]);
 
 export const relations = pgTable("relations", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -78,7 +82,9 @@ export const userRelations = pgTable("user_relations", {
   user_id: uuid("user_id").references(() => users.id).notNull(),
   relation_id: uuid("relation_id").references(() => relations.id).notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("user_relations_user_id_idx").on(table.user_id),
+]);
 
 export const languages = pgTable("languages", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -91,7 +97,9 @@ export const userLanguages = pgTable("user_languages", {
   user_id: uuid("user_id").references(() => users.id).notNull(),
   language_id: uuid("language_id").references(() => languages.id).notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("user_languages_user_id_idx").on(table.user_id),
+]);
 
 export const swipeHistory = pgTable("swipe_history", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -100,7 +108,11 @@ export const swipeHistory = pgTable("swipe_history", {
   is_liked: boolean("is_liked").notNull(),
   is_swiped: boolean("is_swiped").default(true).notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("swipe_history_user_id_idx").on(table.user_id),
+  index("swipe_history_target_id_idx").on(table.target_id),
+  index("swipe_history_user_target_idx").on(table.user_id, table.target_id),
+]);
 
 export const meets = pgTable("meets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -111,7 +123,10 @@ export const meets = pgTable("meets", {
   status: varchar("status", { length: 50 }).default("OPEN").notNull(),
   meet_date: timestamp("meet_date"),
   ...timestamps,
-});
+}, (table) => [
+  index("meets_user_id_idx").on(table.user_id),
+  index("meets_status_idx").on(table.status),
+]);
 
 export const meetInterests = pgTable("meet_interests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -127,7 +142,9 @@ export const meetRequests = pgTable("meet_requests", {
   status: varchar("status", { length: 50 }).default("PENDING").notNull(),
   message: text("message"),
   ...timestamps,
-});
+}, (table) => [
+  index("meet_requests_meet_id_idx").on(table.meet_id),
+]);
 
 export const messages = pgTable("messages", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -136,7 +153,10 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   is_read: boolean("is_read").default(false).notNull(),
   ...timestamps,
-});
+}, (table) => [
+  index("messages_sender_receiver_idx").on(table.sender_id, table.receiver_id),
+  index("messages_created_at_idx").on(table.created_at),
+]);
 
 export const reports = pgTable("reports", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -157,3 +177,13 @@ export const userPreferences = pgTable("user_preferences", {
   max_distance_km: integer("max_distance_km").default(50),
   ...timestamps,
 });
+
+export const pushNotificationTokens = pgTable("push_notification_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull(),
+  platform: varchar("platform", { length: 10 }).notNull(), // 'android' or 'ios'
+  created_at: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("push_tokens_user_id_idx").on(table.user_id),
+]);

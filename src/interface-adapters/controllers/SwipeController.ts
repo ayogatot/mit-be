@@ -2,6 +2,7 @@ import { Context } from "hono";
 import { SwipeActionUseCase } from "../../use-cases/swipe/SwipeAction";
 import { DrizzleSwipeRepository } from "../../infrastructure/repositories/DrizzleSwipeRepository";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 export class SwipeController {
   private useCase: SwipeActionUseCase;
@@ -36,7 +37,7 @@ export class SwipeController {
 
       return successResponse(c, result, "Swipe recorded successfully", 200);
     } catch (error) {
-      console.error(error);
+      logger.error("handleSwipe error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

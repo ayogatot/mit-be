@@ -4,22 +4,30 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
       POSTGRES_DB: dating_db
     ports:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d dating_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build: .
     ports:
       - "3001:3000"
     environment:
-      - DATABASE_URL=postgres://admin:password123@db:5432/dating_db
-      - JWT_SECRET=supersecretjwtkey
+      - DATABASE_URL=postgres://admin:${POSTGRES_PASSWORD:-password123}@db:5432/dating_db
+      - JWT_SECRET=${JWT_SECRET:-dev_secret_change_in_production}
+      - BASE_URL=http://localhost:3001
+      - NODE_ENV=development
     volumes:
       - ./src:/usr/src/app/src
+      - ./uploads:/usr/src/app/uploads
     develop:
       watch:
         - action: sync
@@ -30,7 +38,8 @@ services:
         - action: rebuild
           path: ./Dockerfile
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:

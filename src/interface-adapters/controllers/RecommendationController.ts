@@ -2,6 +2,7 @@ import { Context } from "hono";
 import { GetProfilesUseCase } from "../../use-cases/recommendation/GetProfiles";
 import { DrizzleUserRepository } from "../../infrastructure/repositories/DrizzleUserRepository";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 export class RecommendationController {
   private getProfilesUseCase: GetProfilesUseCase;
@@ -26,7 +27,7 @@ export class RecommendationController {
 
       return successResponse(c, { data: result, limit, offset }, "Profiles fetched successfully", 200);
     } catch (error: any) {
-        console.error(error);
+        logger.error("getProfiles error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

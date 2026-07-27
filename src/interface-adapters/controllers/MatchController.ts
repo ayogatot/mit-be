@@ -1,8 +1,9 @@
 import { Context } from "hono";
 import { db } from "../../infrastructure/database/db";
 import { swipeHistory, users, messages } from "../../infrastructure/database/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 export class MatchController {
   async getMatches(c: Context) {
@@ -72,7 +73,50 @@ export class MatchController {
 
       return successResponse(c, matches, "Matches fetched successfully");
     } catch (error: any) {
-      console.error(error);
+      logger.error("getMatches error", error);
+      return errorResponse(c, "Internal Server Error", 500);
+    }
+  }
+
+  async deleteMatch(c: Context) {
+    try {
+      const userId = c.get("jwtPayload")?.id;
+      if (!userId) return errorResponse(c, "Unauthorized", 401);
+
+      const matchedUserId = c.req.param("matchId");
+
+      // Verify the match exists (current user liked matched user)
+      const [myLike] = await db
+        .select()
+        .from(swipeHistory)
+        .where(and(
+          eq(swipeHistory.user_id, userId),
+          eq(swipeHistory.target_id, matchedUserId),
+          eq(swipeHistory.is_liked, true)
+        ))
+        .limit(1);
+
+      if (!myLike) return errorResponse(c, "Match not found", 404);
+
+      // Remove both swipe records (unmatch)
+      await db.delete(swipeHistory).where(
+        and(eq(swipeHistory.user_id, userId), eq(swipeHistory.target_id, matchedUserId))
+      );
+      await db.delete(swipeHistory).where(
+        and(eq(swipeHistory.user_id, matchedUserId), eq(swipeHistory.target_id, userId))
+      );
+
+      // Delete chat messages between both users
+      await db.delete(messages).where(
+        or(
+          and(eq(messages.sender_id, userId), eq(messages.receiver_id, matchedUserId)),
+          and(eq(messages.sender_id, matchedUserId), eq(messages.receiver_id, userId))
+        )
+      );
+
+      return successResponse(c, null, "Match deleted");
+    } catch (error: any) {
+      logger.error("deleteMatch error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

@@ -1,4 +1,5 @@
 import { Context } from "hono";
+import { z } from "zod";
 import { db } from "../../infrastructure/database/db";
 import {
   meets,
@@ -9,6 +10,15 @@ import {
 } from "../../infrastructure/database/schema";
 import { eq, ne, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
+
+const createMeetSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500),
+  description: z.string().optional(),
+  meet_date: z.string().datetime({ offset: true }).optional(),
+  location_id: z.string().uuid().optional(),
+  interest_ids: z.array(z.string().uuid()).optional(),
+});
 
 export class MeetController {
   async getExploreMeets(c: Context) {
@@ -52,7 +62,7 @@ export class MeetController {
 
       return successResponse(c, meetList, "Meets fetched successfully");
     } catch (error: any) {
-      console.error(error);
+      logger.error("getExploreMeets error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -86,7 +96,7 @@ export class MeetController {
 
       return successResponse(c, meetList, "My meets fetched successfully");
     } catch (error: any) {
-      console.error(error);
+      logger.error("getMyMeets error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -97,9 +107,12 @@ export class MeetController {
       if (!userId) return errorResponse(c, "Unauthorized", 401);
 
       const body = await c.req.json();
-      const { title, description, meet_date, location_id, interest_ids } = body;
+      const parsed = createMeetSchema.safeParse(body);
+      if (!parsed.success) {
+        return errorResponse(c, parsed.error.errors[0]?.message ?? "Validation failed", 400);
+      }
 
-      if (!title) return errorResponse(c, "Title is required", 400);
+      const { title, description, meet_date, location_id, interest_ids } = parsed.data;
 
       const [newMeet] = await db
         .insert(meets)
@@ -120,7 +133,7 @@ export class MeetController {
 
       return successResponse(c, newMeet, "Meet created successfully", 201);
     } catch (error: any) {
-      console.error(error);
+      logger.error("createMeet error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -132,7 +145,6 @@ export class MeetController {
 
       const meetId = c.req.param("id");
 
-      // Only meet owner can see requests
       const [meet] = await db
         .select()
         .from(meets)
@@ -166,7 +178,7 @@ export class MeetController {
 
       return successResponse(c, requests, "Meet requests fetched successfully");
     } catch (error: any) {
-      console.error(error);
+      logger.error("getMeetRequests error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -180,7 +192,6 @@ export class MeetController {
       const body = await c.req.json().catch(() => ({}));
       const { message } = body;
 
-      // Verify meet exists and is OPEN
       const [meet] = await db
         .select()
         .from(meets)
@@ -190,7 +201,6 @@ export class MeetController {
       if (!meet) return errorResponse(c, "Meet not found or not open", 404);
       if (meet.user_id === userId) return errorResponse(c, "Cannot request own meet", 400);
 
-      // Check for duplicate request
       const [existing] = await db
         .select()
         .from(meetRequests)
@@ -210,7 +220,7 @@ export class MeetController {
 
       return successResponse(c, newRequest, "Meet request created", 201);
     } catch (error: any) {
-      console.error(error);
+      logger.error("createMeetRequest error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -229,7 +239,6 @@ export class MeetController {
         return errorResponse(c, "Status must be ACCEPTED or REJECTED", 400);
       }
 
-      // Only meet owner can update requests
       const [meet] = await db
         .select()
         .from(meets)
@@ -248,7 +257,7 @@ export class MeetController {
 
       return successResponse(c, updated, "Meet request updated");
     } catch (error: any) {
-      console.error(error);
+      logger.error("updateMeetRequest error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -276,7 +285,7 @@ export class MeetController {
 
       return successResponse(c, updated, "Meet status updated");
     } catch (error: any) {
-      console.error(error);
+      logger.error("updateMeetStatus error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

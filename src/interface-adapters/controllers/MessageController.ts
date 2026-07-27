@@ -3,9 +3,9 @@ import { db } from "../../infrastructure/database/db";
 import { swipeHistory, messages } from "../../infrastructure/database/schema";
 import { and, eq, or, asc } from "drizzle-orm";
 import { successResponse, errorResponse } from "../../infrastructure/utils/response";
+import { logger } from "../../infrastructure/utils/logger";
 
 async function areMatched(userA: string, userB: string): Promise<boolean> {
-  // userA liked userB
   const [aLikedB] = await db
     .select()
     .from(swipeHistory)
@@ -14,7 +14,6 @@ async function areMatched(userA: string, userB: string): Promise<boolean> {
 
   if (!aLikedB) return false;
 
-  // userB liked userA
   const [bLikedA] = await db
     .select()
     .from(swipeHistory)
@@ -46,7 +45,6 @@ export class MessageController {
         )
         .orderBy(asc(messages.created_at));
 
-      // Mark incoming messages as read
       await db
         .update(messages)
         .set({ is_read: true })
@@ -54,7 +52,7 @@ export class MessageController {
 
       return successResponse(c, conversation, "Conversation fetched successfully");
     } catch (error: any) {
-      console.error(error);
+      logger.error("getConversation error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }
@@ -86,7 +84,7 @@ export class MessageController {
 
       return successResponse(c, newMessage, "Message sent", 201);
     } catch (error: any) {
-      console.error(error);
+      logger.error("sendMessage error", error);
       return errorResponse(c, "Internal Server Error", 500);
     }
   }

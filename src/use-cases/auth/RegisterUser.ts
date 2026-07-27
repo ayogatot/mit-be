@@ -25,7 +25,7 @@ export class RegisterUserUseCase {
 
     const token = sign(
       { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET || "supersecretjwtkey",
+      process.env.JWT_SECRET!,
       { expiresIn: "24h" }
     );
 

@@ -11,7 +11,7 @@ export const jwtMiddleware = async (c: Context, next: Next) => {
 
   const token = authHeader.split(" ")[1];
   try {
-    const payload = verify(token, process.env.JWT_SECRET || "supersecretjwtkey");
+    const payload = verify(token, process.env.JWT_SECRET!);
     c.set("jwtPayload", payload);
     await next();
   } catch (error) {

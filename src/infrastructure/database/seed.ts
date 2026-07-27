@@ -33,7 +33,7 @@ async function seed() {
         name: "Super Admin",
         role_id: adminRole[0].id,
       });
-      console.log(`Admin user seeded: ${adminEmail} / admin123`);
+      console.log(`Admin user seeded: ${adminEmail}`);
     } else {
       console.log("Admin user already exists.");
     }
